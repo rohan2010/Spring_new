@@ -27,8 +27,6 @@ public class StealthSenseFeatureGenerator {
 		float[] ultraSoundSignal = downSample(extractUltraSound(fft), 448);
 		for (int i=0; i<infraSoundSignal.length; i++) features.add(infraSoundSignal[i]);
 		for (int i=0; i<ultraSoundSignal.length; i++) features.add(ultraSoundSignal[i]);
-		System.out.println("InfraSound Length: " + infraSoundSignal.length);
-		System.out.println("UltraSound Length: " + ultraSoundSignal.length);
 		
 		// RMS
 		features.add(RMS(infraSoundSignal));
@@ -120,10 +118,6 @@ public class StealthSenseFeatureGenerator {
 		}
 		
 		float[] result = new float[downSampleSize];
-		for (int i=0; i<downSampleSize; i++) {
-			result[i] = 0.0f;
-		}
-		
 		int subSampleCount = 0;
 		int current_index = 0;
 		for (int i=0; i<samples.length; i++)

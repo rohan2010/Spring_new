@@ -20,7 +20,6 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	FFT fft;
 	PFont font = loadFont("../fonts/BlenderPro-Bold-48.vlw");
 
-	String windowName;
 	float[] fftAverage;
 	float[] fftSmooth;
 	
@@ -40,7 +39,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	
 	float DOWNSAMPLE_SIZE = 47.00000f;
 	int AUDIO_IN_BUFFERSIZE = 1024;
-	int FFT_BUFFERSIZE = AUDIO_IN_BUFFERSIZE*32;
+	int FFT_BUFFERSIZE = AUDIO_IN_BUFFERSIZE*16;
 	int AUDIO_MULTIPLIER = 1;
 	
 	int sampleCount = 0;
@@ -81,13 +80,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	  
 	  minim = new Minim(this);
 	  timeSincePlayback = millis();
-	  
-	  try {
-		Runtime.getRuntime().exec("say hello");
-	  } catch (IOException e) {
-		e.printStackTrace();
-	  }
-	  
+
 	  // Sampling Rate: 96000
 	  // Max Freq Supported: 47998.535 Hz
 	  in = minim.getLineIn(Minim.MONO,AUDIO_IN_BUFFERSIZE,96000);
@@ -97,8 +90,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	  sweep.setGain(-150);
 	  
 	  fft = new FFT(FFT_BUFFERSIZE, in.sampleRate());
-	 
-	  windowName = "None";
+	  fft.window(FFT.HAMMING);
 	  
 	  size(1024, 500);
 	  background(0);
@@ -277,26 +269,27 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	}
 	
 	void drawAudioFrequencyDomain()
-	{
-		  ArrayList<Float> features =  new ArrayList<Float>();
-		  
+	{		  
 		  float[] raw = new float[fft.specSize()];
-		  for (int i=0; i<raw.length; i++) {
-			  features.add(fft.getBand(i));
-		   }
-			
-		  float subWindow = (width) / DOWNSAMPLE_SIZE;
-		  stroke(255);
-	      for (int i=0; i<DOWNSAMPLE_SIZE; i++)
+		  for (int i=0; i<fft.specSize(); i++) {
+			  raw[i] = fft.getBand(i);
+		  }
+		  
+		  int DOWNSAMPLE = 565;
+		  float subWindow = (float)(width) / DOWNSAMPLE;
+		  float[] fftDownsampled = FeatureGenerator.downSample(raw, DOWNSAMPLE);
+		  
+		  noStroke();
+	      for (int i=0; i<fftDownsampled.length; i++)
 	      {
 	    	  fill(128,128,128,128);
-	    	  float val = parseFloat(features.get(i).toString());
-	    	  rect(i*subWindow, height - (2.5f*dB(val)),subWindow,(2.5f*dB(val)));
+	    	  rect(subWindow*i, height - (2.5f*dB(fftDownsampled[i])),subWindow,(2.5f*dB(fftDownsampled[i])));
 	      } 
 	}
 		
 	void drawAudioTimeDomain()
 	{
+		  stroke(255);
 		  int baseLine = 120;
 		  for (int i=0; i<rollingData.length; i++)
 		  {
@@ -348,15 +341,9 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 		
 		if (key==' ')
 		  {
-			  
-			  if (abs(millis()-timeSincePlayback)>600) {
+			  if (abs(millis()-timeSincePlayback)>300) {
 				  for (int i=0; i<rollingData.length; i++) {rollingData[i] = 0;}
 				  sampleCount = 0;
-				  sweep.pause();
-				  sweep.rewind();
-				  sweep.play();
-				  
-				  //sweep.loop(LoopCount);
 				  captureData = true;
 				  timeSincePlayback = millis();
 			  }
@@ -538,7 +525,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	
 	@Override
 	public void samples(float[] audio) {
-		int millisTreshold = 220 + (10*16);
+		int millisTreshold = 100 + (10*16);
 		
 		if (abs(millis()-timeSincePlayback)<millisTreshold && captureData) {
 			sampleCount += 1;
