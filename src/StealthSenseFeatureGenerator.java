@@ -58,6 +58,16 @@ public class StealthSenseFeatureGenerator {
 		for (int i=0; i<infraSoundSpectralBandRatio.length; i++) features.add(infraSoundSpectralBandRatio[i]);
 		for (int i=0; i<ultraSoundSpectralBandRatio.length; i++) features.add(ultraSoundSpectralBandRatio[i]);
 		
+		// Zero Crossings
+		/*
+		float[] timeSignal = new float[fft.timeSize()];
+		for (int i=fft.freqToIndex(InfraSound.end); i<fft.freqToIndex(UltraSound.start); i++) {
+			fft.setBand(i, 0);
+		}
+		fft.inverse(timeSignal);
+		features.add(zeroCrossings(timeSignal));
+		*/
+		
 		// That's it!
 		return(features);
 	}
@@ -220,5 +230,17 @@ public class StealthSenseFeatureGenerator {
 			result[i++] = (f != null ? f : Float.NaN);
 		}
 		return result;
+	}
+	
+	public float zeroCrossings(float[] timeSignal)
+	{
+		float zeroCrossings = 0;
+		for(int i=1; i<timeSignal.length; i++)
+		{
+			if (Math.signum(timeSignal[i])*Math.signum(timeSignal[i-1])<0) {
+				zeroCrossings += 1;
+			}
+		}
+		return zeroCrossings;
 	}
 }

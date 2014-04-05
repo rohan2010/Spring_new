@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class LiveMachineLearning extends PApplet implements AudioListener
+public class LiveRegression extends PApplet implements AudioListener
 {
 	
 	Minim minim;
@@ -23,9 +23,9 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	float[] fftAverage;
 	float[] fftSmooth;
 	
-	String[] modelLabels = {"125Deg", "90Deg", "60Deg", "30Deg"};
+	String[] modelLabels = {"100", "90", "80", "70", "60", "50", "40", "30"};
 	int fileIndex = 0;
-	int predictionIndex = 0;
+	double predictionValue = 0;
 	boolean record = false;
 	float maxPower = -999999;
 
@@ -48,7 +48,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	float rollingData[] = new float[FFT_BUFFERSIZE];
 	
 	ArrayList<String> trainingData = new ArrayList<String>();	
-	WekaClassifier CLS;
+	WekaRegression REG;
 
 	boolean INITIALIZING = true;
 	float timeSincePlayback = 0.0000f;
@@ -264,7 +264,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 		  text(modelLabels[fileIndex], 5, 60);
 		  text("n: " + trainingData.size(), width/2, 60);
 	  } else {
-		  text(modelLabels[predictionIndex], 5, 60);
+		  text(""+predictionValue, 5, 60);
 	  }
 	}
 	
@@ -338,7 +338,6 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 		if (cp5.get(Textfield.class,"name for current model").isActive()) {
 	    	  return;
 	    }
-		
 		if (key==' ')
 		  {
 			  if (abs(millis()-timeSincePlayback)>300) {
@@ -349,7 +348,6 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 			  }
 			  
 		  }
-		
 	}
 	
 	public void controlEvent(ControlEvent theEvent) {
@@ -419,7 +417,7 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 	  {
 		  String filepath = "train.csv";
 		  saveCSV(filepath);
-		  CLS = new WekaClassifier(filepath);
+		  REG = new WekaRegression(filepath);
 	  }
 	  
 	  if (key=='l') {
@@ -565,12 +563,9 @@ public class LiveMachineLearning extends PApplet implements AudioListener
 			{
 				features[j] = parseFloat(featureArray.get(j).toString());
 			}
-			int prediction = CLS.classifyGesture(features);
-			predictionIndex = prediction;
+			predictionValue = REG.classifyGesture(features);
 			captureData = false;
-		    
 		}
-
 	}
 
 	@Override

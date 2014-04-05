@@ -4,6 +4,7 @@ import java.util.Random;
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.functions.supportVector.RBFKernel;
+import weka.classifiers.functions.supportVector.RegOptimizer;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
@@ -26,13 +27,27 @@ public class WekaRegression
 			trainingdata = trainingSource.getDataSet();					
 			trainingdata.setClassIndex(trainingdata.numAttributes() - 1);
 			
+			RBFKernel kernel = new RBFKernel();
+			kernel.setCacheSize(250007);
+			kernel.setGamma(0.01);
+			
 			reg = new SMOreg();
+			reg.setKernel(kernel);
 			
-			reg.setKernel(new RBFKernel());
-			reg.buildClassifier(trainingdata);
 			
-			Evaluation eval = new Evaluation(trainingdata);
-			eval.crossValidateModel(reg, trainingdata, 4, new Random(1));
+			float percent = 66.0f;
+			int trainSize = (int) Math.round(trainingdata.numInstances() * percent/ 100);
+			int testSize = trainingdata.numInstances() - trainSize;
+			
+			trainingdata.randomize(new java.util.Random(0));
+			Instances train = new Instances(trainingdata, 0, trainSize);
+			Instances test = new Instances(trainingdata, trainSize, testSize);
+			
+			reg.buildClassifier(train);
+			Evaluation eval = new Evaluation(test);
+			
+			//eval.crossValidateModel(reg, trainingdata, 4, new Random(1));
+			eval.evaluateModel(reg, test);
 			System.out.println(eval.toSummaryString());
 		}
 		catch (Exception e)
